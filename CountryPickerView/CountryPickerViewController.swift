@@ -22,7 +22,7 @@ public class CountryPickerViewController: UITableViewController {
     fileprivate var showOnlyPreferredSection: Bool {
         return dataSource.showOnlyPreferredSection
     }
-    internal weak var countryPickerView: CountryPickerView! {
+    internal var countryPickerView: CountryPickerView! {
         didSet {
             dataSource = CountryPickerViewDataSourceInternal(view: countryPickerView)
         }
@@ -37,7 +37,16 @@ public class CountryPickerViewController: UITableViewController {
         prepareNavItem()
         prepareSearchBar()
     }
-   
+    
+    public override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        /*if let searchBar = searchController?.searchBar {
+            var frame = searchBar.frame
+            frame.size.height = 172.0
+            searchBar.frame = frame
+        }*/
+    }
 }
 
 // UI Setup
@@ -89,6 +98,7 @@ extension CountryPickerViewController {
         if searchBarPosition == .hidden  {
             return
         }
+        
         searchController = UISearchController(searchResultsController:  nil)
         searchController?.searchResultsUpdater = self
         searchController?.dimsBackgroundDuringPresentation = false
@@ -96,6 +106,12 @@ extension CountryPickerViewController {
         searchController?.definesPresentationContext = true
         searchController?.searchBar.delegate = self
         searchController?.delegate = self
+        
+        if let searchBar = searchController?.searchBar {
+            var frame = searchBar.frame
+            frame.size.height = 72.0
+            searchBar.frame = frame
+        }
 
         switch searchBarPosition {
         case .tableViewHeader: tableView.tableHeaderView = searchController?.searchBar
@@ -205,6 +221,10 @@ extension CountryPickerViewController {
             navigationController?.popViewController(animated: true, completion: completion)
         }
     }
+    
+    override public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UIDevice.current.userInterfaceIdiom == .phone ? 56.0 : 72.0
+    }
 }
 
 // MARK:- UISearchResultsUpdating
@@ -271,6 +291,10 @@ class CountryTableViewCell: UITableViewCell {
         super.layoutSubviews()
         imageView?.frame.size = flgSize
         imageView?.center.y = contentView.center.y
+        
+        var frame = textLabel!.frame
+        frame.origin.x = imageView!.frame.maxX + 16.0
+        textLabel?.frame = frame
     }
 }
 
