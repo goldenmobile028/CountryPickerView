@@ -18,6 +18,11 @@ public struct Country: Equatable {
     public let name: String
     public let code: String
     public let phoneCode: String
+    public init(name: String, code: String, phoneCode: String) {
+        self.name = name
+        self.code = code
+        self.phoneCode = phoneCode
+    }
     public func localizedName(_ locale: Locale = Locale.current) -> String? {
         return locale.localizedString(forRegionCode: code)
     }
