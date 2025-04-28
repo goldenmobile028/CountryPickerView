@@ -98,7 +98,7 @@ public class CountryPickerView: NibView {
     weak public var hostViewController: UIViewController?
     
     fileprivate var _selectedCountry: Country?
-    internal(set) public var selectedCountry: Country {
+    public var selectedCountry: Country {
         get {
             return _selectedCountry
                 ?? usableCountries.first(where: { $0.code == Locale.current.regionCode })
