@@ -120,7 +120,11 @@ public extension CountryPickerViewDataSource {
     }
     
     func cellImageViewSize(in countryPickerView: CountryPickerView) -> CGSize {
-        return CGSize(width: 34, height: 24)
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            return CGSize(width: 32.0, height: 24.0)
+        } else {
+            return CGSize(width: 48.0, height: 36)
+        }
     }
     
     func navigationTitle(in countryPickerView: CountryPickerView) -> String? {
