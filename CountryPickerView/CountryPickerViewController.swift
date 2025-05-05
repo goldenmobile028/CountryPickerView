@@ -8,9 +8,13 @@
 
 import UIKit
 
-public class CountryPickerViewController: UITableViewController {
+public class CountryPickerViewController: UIViewController {
 
     public var searchController: UISearchController?
+    fileprivate var topView: UIView!
+    fileprivate var backButton: UIButton!
+    fileprivate var titleLabel: UILabel!
+    fileprivate var countriesTableView: UITableView!
     fileprivate var searchResults = [Country]()
     fileprivate var isSearchMode = false
     fileprivate var sectionsTitles = [String]()
@@ -33,6 +37,7 @@ public class CountryPickerViewController: UITableViewController {
     override public func viewDidLoad() {
         super.viewDidLoad()
         
+        prepareViews()
         prepareTableItems()
         prepareNavItem()
         prepareSearchBar()
@@ -46,11 +51,53 @@ public class CountryPickerViewController: UITableViewController {
             frame.size.height = 172.0
             searchBar.frame = frame
         }*/
+        
+        let height: CGFloat = UIDevice.current.userInterfaceIdiom == .phone ? 56 : 72
+        topView.frame = CGRect(x: 0, y: view.safeAreaInsets.top, width: view.bounds.width, height: height)
+        backButton.frame = CGRect(x: 10, y: 0, width: height, height: height)
+        let width: CGFloat = 240
+        titleLabel.frame = CGRect(x: (view.bounds.width - width) / 2.0, y: 0, width: width, height: height)
+        countriesTableView.frame = CGRect(x: 0, y: view.safeAreaInsets.top + height, width: view.bounds.width, height: view.bounds.height - view.safeAreaInsets.top - height - view.safeAreaInsets.bottom)
     }
 }
 
 // UI Setup
 extension CountryPickerViewController {
+    
+    func prepareViews() {
+        view.backgroundColor = .systemBackground
+        
+        topView = UIView(frame: .zero)
+        topView.backgroundColor = .systemBackground
+        view.addSubview(topView)
+        
+        var fontSize: CGFloat = UIDevice.current.userInterfaceIdiom == .phone ? 16 : 24
+        backButton = UIButton(type: .custom)
+        backButton.setImage(UIImage(systemName: "chevron.left", withConfiguration: UIImage.SymbolConfiguration(font: .boldSystemFont(ofSize: fontSize))), for: .normal)
+        backButton.tintColor = .label
+        backButton.addTarget(self, action: #selector(onBack), for: .touchUpInside)
+        topView.addSubview(backButton)
+        
+        fontSize = UIDevice.current.userInterfaceIdiom == .phone ? 20.0 : 30.0
+        titleLabel = UILabel(frame: .zero)
+        titleLabel.text = "COUNTRIES"
+        titleLabel.font = UIFont(name: "Nunito-Black", size: fontSize)!
+        titleLabel.textAlignment = .center
+        topView.addSubview(titleLabel)
+        
+        countriesTableView = UITableView(frame: .zero, style: .grouped)
+        countriesTableView.dataSource = self
+        countriesTableView.delegate = self
+        view.addSubview(countriesTableView)
+    }
+    
+    @objc func onBack() {
+        if navigationController?.viewControllers.count == 1 {
+            navigationController?.dismiss(animated: true, completion: nil)
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
+    }
     
     func prepareTableItems()  {
         if !showOnlyPreferredSection {
@@ -63,6 +110,12 @@ extension CountryPickerViewController {
             }
             groupedData.forEach{ key, value in
                 groupedData[key] = value.sorted(by: { (lhs, rhs) -> Bool in
+                    if lhs.name.lowercased() == "anonymous" {
+                        return true
+                    }
+                    if rhs.name.lowercased() == "anonymous" {
+                        return false
+                    }
                     return lhs.localizedName(locale) ?? lhs.name < rhs.localizedName(locale) ?? rhs.name
                 })
             }
@@ -77,8 +130,8 @@ extension CountryPickerViewController {
             countries[preferredTitle] = dataSource.preferredCountries
         }
         
-        tableView.sectionIndexBackgroundColor = .clear
-        tableView.sectionIndexTrackingBackgroundColor = .clear
+        countriesTableView.sectionIndexBackgroundColor = .clear
+        countriesTableView.sectionIndexTrackingBackgroundColor = .clear
     }
     
     func prepareNavItem() {
@@ -114,7 +167,7 @@ extension CountryPickerViewController {
         }
 
         switch searchBarPosition {
-        case .tableViewHeader: tableView.tableHeaderView = searchController?.searchBar
+        case .tableViewHeader: countriesTableView.tableHeaderView = searchController?.searchBar
         case .navigationBar: navigationItem.titleView = searchController?.searchBar
         default: break
         }
@@ -126,17 +179,17 @@ extension CountryPickerViewController {
 }
 
 //MARK:- UITableViewDataSource
-extension CountryPickerViewController {
+extension CountryPickerViewController: UITableViewDataSource {
     
-    override public func numberOfSections(in tableView: UITableView) -> Int {
+    public func numberOfSections(in tableView: UITableView) -> Int {
         return isSearchMode ? 1 : sectionsTitles.count
     }
     
-    override public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return isSearchMode ? searchResults.count : countries[sectionsTitles[section]]!.count
     }
     
-    override public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let identifier = String(describing: CountryTableViewCell.self)
         
         let cell = tableView.dequeueReusableCell(withIdentifier: identifier) as? CountryTableViewCell
@@ -171,11 +224,11 @@ extension CountryPickerViewController {
         return cell
     }
     
-    override public func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    public func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return isSearchMode ? nil : sectionsTitles[section]
     }
     
-    override public func sectionIndexTitles(for tableView: UITableView) -> [String]? {
+    public func sectionIndexTitles(for tableView: UITableView) -> [String]? {
         if isSearchMode {
             return nil
         } else {
@@ -186,15 +239,15 @@ extension CountryPickerViewController {
         }
     }
     
-    override public func tableView(_ tableView: UITableView, sectionForSectionIndexTitle title: String, at index: Int) -> Int {
+    public func tableView(_ tableView: UITableView, sectionForSectionIndexTitle title: String, at index: Int) -> Int {
         return sectionsTitles.firstIndex(of: title)!
     }
 }
 
 //MARK:- UITableViewDelegate
-extension CountryPickerViewController {
+extension CountryPickerViewController: UITableViewDelegate {
 
-    override public func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+    public func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
         if let header = view as? UITableViewHeaderFooterView {
             header.textLabel?.font = dataSource.sectionTitleLabelFont
             if let color = dataSource.sectionTitleLabelColor {
@@ -203,7 +256,7 @@ extension CountryPickerViewController {
         }
     }
     
-    override public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let country = isSearchMode ? searchResults[indexPath.row]
             : countries[sectionsTitles[indexPath.section]]![indexPath.row]
@@ -222,7 +275,7 @@ extension CountryPickerViewController {
         }
     }
     
-    override public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return UIDevice.current.userInterfaceIdiom == .phone ? 56.0 : 72.0
     }
 }
@@ -251,7 +304,7 @@ extension CountryPickerViewController: UISearchResultsUpdating {
                 return name.hasPrefix(query) || (dataSource.showCountryCodeInList && code.hasPrefix(query))
             }))
         }
-        tableView.reloadData()
+        countriesTableView.reloadData()
     }
 }
 
